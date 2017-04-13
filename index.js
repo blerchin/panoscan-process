@@ -5,7 +5,7 @@ const assert = require('assert');
 const jpeg = require('jpeg-js');
 
 const CHUNK_SIZE = 1024;
-const OUT_SIZE = 4096;
+const OUT_SIZE = 8192;
 
 const ppmIn = process.argv[2];
 const ppm = fs.createReadStream(ppmIn);
@@ -17,11 +17,12 @@ let bufs = [];
 
 ppm.on('readable', function() {
   let chunk;
+  let remain;
   if (!srcWidth) {
     chunk = ppm.read(CHUNK_SIZE);
-    let headLen = readHeader(chunk);
-    chunk = Buffer.from(chunk.toString().slice(headLen));
-    ppm.unshift(chunk)
+    remain = readHeader(chunk);
+    ppm.unshift(remain);
+    ppm.read(1270);
   }
   while (null !== (chunk = ppm.read(srcWidth * 3))) {
     const alphaChunk = new Buffer(srcWidth * 4);
@@ -55,12 +56,11 @@ function writeFile() {
 function readHeader(buf) {
   let lines = buf.toString('utf-8').split('\n');
   let line = 0;
-  let chars = 0;
+  let max = 0;
   function next() {
-    chars += lines[line].length + 1;
     line++;
   }
-  while (chars < buf.length && line < 6) {
+  while (!max && line < 12) {
     if (lines[line][0] === '#') {
       next();
     } else if (lines[line] === 'P6') {
@@ -68,11 +68,12 @@ function readHeader(buf) {
     } else if (!srcWidth) {
       srcWidth = parseInt(lines[line].split(' ')[0]);
       next();
-    } else {
-      assert.equal(lines[line], '65535')
+    } else if (lines[line] == '65535') {
+      max = true;
       next();
     }
   }
   assert.notEqual(srcWidth, 0);
-  return chars;
+  assert.equal(max, true);
+  return Buffer.from(lines.slice(line + 1).join('\n'), 'utf-8');
 }
