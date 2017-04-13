@@ -5,7 +5,6 @@ const assert = require('assert');
 const jpeg = require('jpeg-js');
 
 const CHUNK_SIZE = 1024;
-const OUT_FMT = 'TIFF';
 const OUT_SIZE = 4096;
 
 const ppmIn = process.argv[2];
