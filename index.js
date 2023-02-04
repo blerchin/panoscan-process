@@ -33,7 +33,10 @@ ppm.on('readable', function() {
       writeFile();
     }
   }
-  //writeFile();
+});
+
+ppm.on('end', () => {
+  writeFile();
 });
 
 function writeFile() {
@@ -41,13 +44,14 @@ function writeFile() {
   const raster = Buffer.concat(bufs);
   const img = jpeg.encode({
     data: raster,
-    height: OUT_SIZE,
-    width: bufs.length 
+    height: bufs.length,
+    width: srcWidth 
   });
-  fs.writeFileSync(out + '--' + numOut + '.jpg', img.data);
+  const fname = out + '--' + numOut + '.jpg'
+  fs.writeFileSync(fname, img.data);
   bufs = [];
   numOut++;
-  console.log("wrote lines");
+  console.log("wrote file ", fname);
 }
 
 
